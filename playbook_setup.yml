@@ -1,0 +1,5 @@
+---
+- name: Setup Nginx & Flask Application
+  hosts: all
+  roles:
+    - disable_selinux
