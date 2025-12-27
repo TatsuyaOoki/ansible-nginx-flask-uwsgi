@@ -1,0 +1,43 @@
+---
+- name: Get SELinux Policy Before
+  ansible.builtin.command: getenforce
+  changed_when: false
+  register: disable_selinux_policy_before
+
+- name: Display SELinux Policy Before
+  ansible.builtin.debug:
+    var: disable_selinux_policy_before.stdout
+
+- name: Disable SELinux Block
+  when: disable_selinux_policy_before.stdout != "Disabled"
+  block:
+    - name: Data Type Conversion
+      ansible.builtin.set_fact:
+        disable_selinux_rhel_version: "{{ ansible_facts.distribution_major_version | int }}"
+
+    - name: Include tasks to Disable SELinux for RHEL8 or more.
+      ansible.builtin.include_tasks: disable_selinux.yml
+      when: disable_selinux_rhel_version >= 8
+
+    - name: Get SELinux Policy After
+      ansible.builtin.command: getenforce
+      changed_when: false
+      register: disable_selinux_policy_after
+
+    - name: Display SELinux Policy after
+      ansible.builtin.debug:
+        var: disable_selinux_policy_after.stdout
+
+    - name: Assert SELinux Policy
+      ansible.builtin.assert:
+        that:
+          - disable_selinux_policy_after.stdout == "Disabled"
+        fail_msg: "SELinux is not Disabled"
+
+  rescue:
+    - name: Display Error Ditals
+      ansible.builtin.debug:
+        msg:
+          - Task Name: "{{ ansible_failed_task.name }}"
+            Action: "{{ ansible_failed_task.action }}"
+            Message: "{{ ansible_failed_result.msg }}"
