@@ -1,5 +1,13 @@
 ---
 - name: Setup Nginx & Flask Application
   hosts: all
+  pre_tasks:
+    - name: Assert OS type
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.os_family == "RedHat"
+        fail_msg: "This playbook only supports RedHat-based systems."
+
   roles:
     - disable_selinux
+    - setup_nginx
